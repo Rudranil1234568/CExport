@@ -21,6 +21,28 @@ function getGallery() {
     $stmt = $pdo->query("SELECT * FROM gallery WHERE status = 1 ORDER BY id DESC");
     return $stmt->fetchAll();
 }
+
+if (isset($_POST['send_message'])) {
+    // 1. Capture Data
+    $company = htmlspecialchars($_POST['company_name']);
+    $person  = htmlspecialchars($_POST['contact_person']);
+    $email   = htmlspecialchars($_POST['email']);
+    $phone   = htmlspecialchars($_POST['phone']); // <--- Added Phone
+    $req     = htmlspecialchars($_POST['requirements']);
+
+    // 2. Format Data for Database
+    $dbName = !empty($person) ? $person : 'Unknown'; 
+
+    // 3. Insert into Database
+    // Make sure your table has 'phone' and 'company' columns
+    $stmt = $pdo->prepare("INSERT INTO messages (name, email, phone, company, message) VALUES (?, ?, ?, ?, ?)");
+    
+    if ($stmt->execute([$dbName, $email, $phone, $company, $req])) {
+        echo "<script>alert('Request sent successfully! We will contact you shortly.'); window.location.href='index.php';</script>";
+    } else {
+        echo "<script>alert('Failed to send message. Please try again.');</script>";
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -402,7 +424,9 @@ function getGallery() {
             </div>
         </div>
     </section>
-
+    
+    
+    
     <!-- ABOUT SECTION -->
     <section id="about" class="py-24 bg-[#F0F2F5] overflow-hidden relative font-sans">
         <div class="max-w-7xl mx-auto px-6">
@@ -488,6 +512,140 @@ function getGallery() {
         </div>
     </section>
 
+   <!-- PERSONAL JOURNEY SECTION START -->
+    <?php
+    // 1. Fetch Text Content
+    $jTitle = getContent('journey_title'); 
+    $jSub   = getContent('journey_subtitle');
+
+    // 2. Fetch Media Items from Database
+    global $pdo; 
+    $stmt = $pdo->query("SELECT * FROM personal_journey ORDER BY id DESC");
+    $journey_media = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    // 3. Prepare Data for Alpine.js (JSON)
+    $js_media = [];
+    foreach($journey_media as $m) {
+        if($m['media_type'] == 'image') {
+            $src = "view_image.php?id={$m['id']}&type=journey";
+            $thumb = $src;
+        } elseif($m['media_type'] == 'video') {
+            $src = "assets/videos/{$m['video_path']}";
+            // Use a generic video placeholder for thumb if not generated
+            $thumb = "https://cdn-icons-png.flaticon.com/512/2790/2790117.png"; 
+        } else {
+            // Youtube
+            $src = "https://www.youtube.com/embed/{$m['youtube_id']}";
+            $thumb = "https://img.youtube.com/vi/{$m['youtube_id']}/hqdefault.jpg";
+        }
+        $js_media[] = [
+            'id' => $m['id'], 
+            'type' => $m['media_type'], 
+            'src' => $src, 
+            'thumb' => $thumb
+        ];
+    }
+    // Encode for JavaScript
+    $jsonOutput = htmlspecialchars(json_encode($js_media), ENT_QUOTES, 'UTF-8');
+    ?>
+
+    <!-- Load Alpine.js (Only if not loaded elsewhere) -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
+
+    <section class="py-24 bg-[#F0F2F5] relative overflow-hidden" id="personal-journey">
+        <!-- Decorative Background Element -->
+        <div class="absolute top-0 right-0 w-64 h-64 bg-brand-blue/5 rounded-full blur-3xl pointer-events-none z-0"></div>
+        <div class="absolute bottom-0 left-0 w-96 h-96 bg-brand-accent/5 rounded-full blur-3xl pointer-events-none z-0"></div>
+
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            
+            <!-- Section Header -->
+            <div class="text-center mb-12" data-aos="fade-up">
+                <h4 class="text-brand-blue font-bold tracking-[0.2em] uppercase text-sm mb-3 flex items-center justify-center gap-2">
+                    <span class="w-8 h-0.5 bg-brand-blue"></span> Moments <span class="w-8 h-0.5 bg-brand-blue"></span>
+                </h4>
+                <h2 class="font-heading text-4xl md:text-5xl font-bold text-brand-navy mb-6">
+                    <?= !empty($jTitle) ? htmlspecialchars($jTitle) : 'Our Journey' ?>
+                </h2>
+                <p class="text-gray-500 text-lg max-w-2xl mx-auto leading-relaxed">
+                    <?= !empty($jSub) ? nl2br(htmlspecialchars($jSub)) : 'Explore the moments that define our passion for aquatic life.' ?>
+                </p>
+            </div>
+
+            <!-- Media Gallery Container (Refactored UI) -->
+            <div class="bg-white p-6 rounded-[20px] shadow-sm border border-gray-100 min-h-[600px] overflow-hidden"
+                 x-data="{ 
+                    mediaItems: <?= $jsonOutput ?>,
+                    activeItem: null,
+                    setActive(item) { this.activeItem = item; }
+                 }"
+                 x-init="activeItem = mediaItems.length > 0 ? mediaItems[0] : null"
+                 data-aos="zoom-in">
+                
+                <div class="grid grid-cols-12 gap-6 h-[500px]">
+                    
+                    <!-- Left: Thumbnails List -->
+                    <div class="col-span-12 md:col-span-3 lg:col-span-2 flex flex-col gap-3 overflow-y-auto pr-2 custom-scrollbar max-h-full">
+                        <template x-for="item in mediaItems" :key="item.id">
+                            <div @click="setActive(item)" 
+                                 class="relative cursor-pointer rounded-xl overflow-hidden border-2 transition-all aspect-[4/3] group shrink-0"
+                                 :class="activeItem && activeItem.id === item.id ? 'border-brand-blue ring-2 ring-brand-blue/20 opacity-100' : 'border-transparent opacity-60 hover:opacity-100'">
+                                
+                                <!-- 1. Standard Image or Youtube Thumbnail -->
+                                <template x-if="item.type !== 'video'">
+                                    <img :src="item.thumb" class="w-full h-full object-cover bg-gray-100">
+                                </template>
+
+                                <!-- 2. Video File Thumbnail (Show Actual Video Frame) -->
+                                <!-- Added pointer-events-none to prevent the thumbnail video from stealing clicks or playing -->
+                                <template x-if="item.type === 'video'">
+                                    <video :src="item.src" class="w-full h-full object-cover bg-black pointer-events-none" muted preload="metadata" playsinline></video>
+                                </template>
+                                
+                                <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                    <span x-show="item.type === 'video'" class="bg-black/50 text-white rounded-full p-1"><i data-lucide="play" class="w-4 h-4"></i></span>
+                                    <span x-show="item.type === 'youtube'" class="bg-red-600 text-white rounded-full p-1"><i data-lucide="youtube" class="w-4 h-4"></i></span>
+                                </div>
+                            </div>
+                        </template>
+                        
+                        <div x-show="mediaItems.length === 0" class="text-center py-10 text-gray-400 text-xs italic bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                            No media added
+                        </div>
+                    </div>
+
+                    <!-- Right: Main Viewer -->
+                    <div class="col-span-12 md:col-span-9 lg:col-span-10 bg-black rounded-2xl overflow-hidden flex items-center justify-center relative shadow-inner">
+                        <template x-if="activeItem">
+                            <div class="w-full h-full flex items-center justify-center animate-fadeIn">
+                                <!-- Changed from x-show to x-if to completely remove elements from DOM when inactive, preventing background audio -->
+                                <template x-if="activeItem.type === 'image'">
+                                    <img :src="activeItem.src" class="max-w-full max-h-full object-contain">
+                                </template>
+                                
+                                <template x-if="activeItem.type === 'video'">
+                                    <video :src="activeItem.src" controls autoplay class="max-w-full max-h-full object-contain"></video>
+                                </template>
+                                
+                                <template x-if="activeItem.type === 'youtube'">
+                                    <iframe :src="activeItem.src" class="w-full h-full" frameborder="0" allowfullscreen></iframe>
+                                </template>
+                            </div>
+                        </template>
+                        
+                        <template x-if="!activeItem">
+                            <div class="text-white/50 flex flex-col items-center">
+                                <i data-lucide="image" class="w-16 h-16 mb-4 opacity-50"></i>
+                                <p>Select an item to preview</p>
+                            </div>
+                        </template>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+    <!-- PERSONAL JOURNEY SECTION END -->
 
 
     <section id="gallery" class="py-24 bg-gradient-to-b from-brand-light to-white relative">
@@ -683,28 +841,48 @@ function getGallery() {
                 </div>
 
                 <div class="p-12 bg-white/80">
-                    <form class="space-y-6">
+                    <form class="space-y-6" method="post">
+                        
                         <div>
                             <label class="block text-xs font-bold uppercase text-brand-navy mb-2">Company Name</label>
-                            <input type="text" class="w-full bg-white border border-brand-light rounded-xl p-4 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-light transition-all shadow-sm" placeholder="e.g. Ocean Blue Ltd">
+                            <input type="text" name="company_name" required
+                                class="w-full bg-white border border-brand-light rounded-xl p-4 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-light transition-all shadow-sm" 
+                                placeholder="e.g. Ocean Blue Ltd">
                         </div>
-                        <div class="grid grid-cols-2 gap-6">
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                             <div>
                                 <label class="block text-xs font-bold uppercase text-brand-navy mb-2">Contact Person</label>
-                                <input type="text" class="w-full bg-white border border-brand-light rounded-xl p-4 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-light transition-all shadow-sm" placeholder="John Doe">
+                                <input type="text" name="contact_person" required
+                                    class="w-full bg-white border border-brand-light rounded-xl p-4 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-light transition-all shadow-sm" 
+                                    placeholder="John Doe">
                             </div>
-                            <div>
-                                <label class="block text-xs font-bold uppercase text-brand-navy mb-2">Email</label>
-                                <input type="email" class="w-full bg-white border border-brand-light rounded-xl p-4 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-light transition-all shadow-sm" placeholder="john@company.com">
+
+                           <div>
+                                <label class="block text-xs font-bold uppercase text-brand-navy mb-2">Phone Number <span class="text-red-500">*</span></label>
+                                <input type="tel" name="phone" required  
+                                    class="w-full bg-white border border-brand-light rounded-xl p-4 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-light transition-all shadow-sm  invalid:text-red-600" 
+                                    placeholder="+1 (555) 000-0000">
+                            </div>
+                            <div class="md:col-span-2"> <label class="block text-xs font-bold uppercase text-brand-navy mb-2">Email</label>
+                                <input type="email" name="email" required
+                                    class="w-full bg-white border border-brand-light rounded-xl p-4 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-light transition-all shadow-sm" 
+                                    placeholder="john@company.com">
                             </div>
                         </div>
+
                         <div>
                             <label class="block text-xs font-bold uppercase text-brand-navy mb-2">Requirements</label>
-                            <textarea rows="3" class="w-full bg-white border border-brand-light rounded-xl p-4 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-light transition-all shadow-sm" placeholder="Tell us about your order needs..."></textarea>
+                            <textarea name="requirements" rows="3" required
+                                    class="w-full bg-white border border-brand-light rounded-xl p-4 focus:outline-none focus:border-brand-blue focus:ring-4 focus:ring-brand-light transition-all shadow-sm" 
+                                    placeholder="Tell us about your order needs..."></textarea>
                         </div>
-                        <button class="w-full py-4 bg-brand-accent hover:bg-brand-accentHover text-white font-bold uppercase tracking-widest shadow-lg transform hover:-translate-y-1 transition-all flex justify-center gap-2 rounded-xl">
+
+                        <button type="submit" name="send_message" 
+                                class="w-full py-4 bg-brand-accent hover:bg-brand-accentHover text-white font-bold uppercase tracking-widest shadow-lg transform hover:-translate-y-1 transition-all flex justify-center gap-2 rounded-xl">
                             Request Price List <i data-lucide="send" class="w-4 h-4"></i>
                         </button>
+
                     </form>
                 </div>
 
