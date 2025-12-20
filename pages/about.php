@@ -414,22 +414,119 @@ if (isset($_POST['send_message'])) {
         </div>
     </section>
 
-    <footer class="bg-brand-white border-t border-gray-100 py-12 relative z-10">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="flex items-center gap-2">
-                <img id="nav-logo" src="view_image.php?type=logo" alt="CExport Logo"
-                    class="h-12 w-auto object-contain drop-shadow-md transition-all ">
+    <footer class="relative bg-gradient-to-b from-brand-white to-gray-50 border-t border-gray-200/70">
+        <!-- soft glow -->
+        <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.06),transparent_60%)]"></div>
+
+        <div class="relative max-w-7xl mx-auto px-6 py-14">
+            <div class="flex flex-col md:flex-row items-center md:items-start justify-between gap-10">
+
+                <!-- Logo, Brand & Social -->
+                <div class="flex flex-col items-center md:items-start gap-5 max-w-sm">
+                    <img 
+                        id="nav-logo"
+                        src="view_image.php?type=logo"
+                        alt="CExport Logo"
+                        class="h-12 w-auto object-contain drop-shadow-lg transition-transform duration-300 hover:scale-105"
+                    >
+
+                    <p class="text-sm text-gray-500 text-center md:text-left">
+                        Powering global exports with precision, trust, and modern technology.
+                    </p>
+
+                    <!-- Social Connect -->
+                    <div class="mt-4">
+                        <p class="text-xs uppercase tracking-widest text-gray-400 mb-3 text-center md:text-left">
+                            Social Connect
+                        </p>
+
+                        <div class="flex gap-4 justify-center md:justify-start">
+                            <?php
+                            $fb    = getContent('social_facebook');
+                            $insta = getContent('social_instagram');
+                            $wa    = getContent('social_whatsapp');
+                            ?>
+
+                            <?php if(!empty($fb) && $fb != '#'): ?>
+                            <a href="<?= htmlspecialchars($fb) ?>" target="_blank"
+                            class="group">
+                                <img width="28" height="28"
+                                    class="opacity-60 group-hover:opacity-100 transition"
+                                    src="https://img.icons8.com/windows/32/000000/facebook-new.png"
+                                    alt="facebook" />
+                            </a>
+                            <?php endif; ?>
+
+                            <?php if(!empty($insta) && $insta != '#'): ?>
+                            <a href="<?= htmlspecialchars($insta) ?>" target="_blank"
+                            class="group">
+                                <img width="28" height="28"
+                                    class="opacity-60 group-hover:opacity-100 transition"
+                                    src="https://img.icons8.com/windows/32/000000/instagram-new.png"
+                                    alt="instagram" />
+                            </a>
+                            <?php endif; ?>
+
+                            <?php if(!empty($wa) && $wa != '#'): ?>
+                            <a href="<?= htmlspecialchars($wa) ?>" target="_blank"
+                            class="group">
+                                <img width="28" height="28"
+                                    class="opacity-60 group-hover:opacity-100 transition"
+                                    src="https://img.icons8.com/windows/32/000000/whatsapp--v1.png"
+                                    alt="whatsapp" />
+                            </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Links -->
+                <div class="flex flex-col sm:flex-row gap-10 text-center sm:text-left">
+                    <div>
+                        <h4 class="text-sm font-semibold text-brand-navy mb-3 tracking-wide uppercase">
+                            Company
+                        </h4>
+                        <ul class="space-y-2 text-sm text-gray-500">
+                            <li><a href="about.php" class="hover:text-brand-blue transition">About</a></li>
+                            <li><a href="#" class="hover:text-brand-blue transition">Privacy Policy</a></li>
+                            <li><a href="#" class="hover:text-brand-blue transition">Terms & Conditions</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-semibold text-brand-navy mb-3 tracking-wide uppercase">
+                            Support
+                        </h4>
+                        <ul class="space-y-2 text-sm text-gray-500">
+                            <li><a href="#contact" class="hover:text-brand-blue transition">Contact</a></li>
+                            <li><a href="#" class="hover:text-brand-blue transition">Documentation</a></li>
+                            <li><a href="#" class="hover:text-brand-blue transition">Help Center</a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <p class="text-gray-400 text-sm">© 2024 CExport. All rights reserved.</p>
-            <p class="text-gray-400 text-sm">Design By Que Systems</p>
-            <div class="flex gap-6 text-sm font-bold text-brand-navy">
-                <a href="#" class="hover:text-brand-blue">Privacy</a>
-                <a href="#" class="hover:text-brand-blue">Terms</a>
-                <a href="#" class="hover:text-brand-blue">Sitemap</a>
+
+            <!-- Divider -->
+            <div class="my-10 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+
+            <!-- Bottom Row -->
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
+                <p>
+                    © <?= date('Y') ?> <a href="#" rel="noopener noreferrer"
+                                        class="text-gray-600 font-medium hover:text-brand-blue transition">
+                                            CExport
+                                    </a>. All rights reserved.
+                </p>
+                <p>
+                    Crafted with care by 
+                    <a href="https://quesystems.in/" target="_blank" rel="noopener noreferrer"
+                        class="text-gray-600 font-semibold hover:text-brand-blue transition">
+                            Que Systems
+                    </a>
+                </p>
             </div>
         </div>
     </footer>
-
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>

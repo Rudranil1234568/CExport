@@ -298,15 +298,46 @@ if (isset($_POST['send_message'])) {
         /* Scrolled state active (Navy) */
         .scrolled-nav .nav-link.active { color: #023E8A !important; }
         .scrolled-nav .nav-link.active::after { width: 100%; background-color: #023E8A; }
+        * {
+        max-width: 100%;
+        }
+
+        html, body {
+        width: 100%;
+        overflow-x: hidden;
+        }
+        .swiper,
+        .swiper-wrapper,
+        .swiper-slide {
+        max-width: 100%;
+        overflow: hidden;
+        }
+        /* Mobile menu must always stay white */
+        #mobile-menu a {
+        color: #ffffff !important;
+        }
+
+        #mobile-menu {
+        background-color: rgba(2, 62, 138, 0.95); /* brand-navy */
+        }
+
+        #mobile-menu {
+        position: fixed;
+        top: 80px; /* navbar height */
+        left: 0;
+        right: 0;
+        z-index: 9999;
+        }
+
     </style>
 </head>
 
-<body class="bg-brand-light text-brand-navy font-sans antialiased overflow-x-hidden">
-
+<html lang="en" class="overflow-x-hidden">
+<body class="bg-brand-light text-brand-navy font-sans antialiased">
 
     <div id="bubble-container" class="fixed inset-0 pointer-events-none z-0 overflow-hidden h-full w-full"></div>
 
-    <nav class="fixed w-full z-50 transition-all duration-300 border-b border-white/0" id="navbar">
+    <nav class="fixed inset-x-0 z-50 transition-all duration-300 border-b border-white/0" id="navbar">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-20">
                 <div class="flex items-center gap-2">
@@ -346,7 +377,7 @@ if (isset($_POST['send_message'])) {
         </div>
     </nav>
 
-    <header id="home" class="relative h-screen flex items-center justify-center overflow-hidden">
+    <header id="home" class="relative min-h-[100svh] flex items-center justify-center overflow-hidden">
 
         <div class="absolute inset-0 z-0">
             <?php 
@@ -364,7 +395,7 @@ if (isset($_POST['send_message'])) {
 
             <?php if($showVideo): ?>
             <!-- Added id="heroVideo" and removed 'muted' to attempt default audio -->
-            <video id="heroVideo" autoplay loop playsinline preload="auto" class="w-full h-full object-cover">
+            <video id="heroVideo" autoplay loop playsinline preload="auto" class="absolute inset-0 w-full h-full object-cover">
                 <!-- Use htmlspecialchars for security -->
                 <source src="<?= htmlspecialchars($heroVideo) ?>" type="video/mp4">
                 <!-- Fallback text/image if browser doesn't support video -->
@@ -380,14 +411,26 @@ if (isset($_POST['send_message'])) {
         <div class="relative z-10 max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-2 gap-12 items-center h-full">
             <div class="pt-20 md:pt-0" data-aos="fade-right" data-aos-duration="1000">
 
-                <h1 class="font-heading text-6xl md:text-8xl font-bold leading-[0.9] text-white mb-8 drop-shadow-lg">
-                    <?= getContent('hero_title') ?>
+                <h1
+                    class="
+                        font-heading 
+                        font-bold 
+                        text-white 
+                        drop-shadow-lg 
+                        mb-6
+                        leading-tight
+
+                        text-[clamp(1.75rem,5vw,3.75rem)]
+                        sm:text-[clamp(2rem,6vw,4.5rem)]
+                    "
+                    >
+                        <?= getContent('hero_title') ?>
                 </h1>
 
-                <div
-                    class="font-serif italic text-xl md:text-2xl text-white/90 mb-10 max-w-lg border-l-4 border-brand-accent pl-6 leading-relaxed shadow-sm">
+                <div class="font-serif italic text-sm sm:text-base md:text-lg text-white/90 mb-8 max-w-lg border-l-4 border-brand-accent pl-5 leading-relaxed shadow-sm">
                     <?= getContent('hero_subtitle') ?>
                 </div>
+
 
                 <div class="flex flex-wrap gap-4">
                     <a href="#collection"
@@ -639,37 +682,37 @@ if (isset($_POST['send_message'])) {
     </section>
 
     <?php
-// 1. Fetch Text Content
-$jTitle = getContent('journey_title'); 
-$jSub   = getContent('journey_subtitle');
+    // 1. Fetch Text Content
+    $jTitle = getContent('journey_title'); 
+    $jSub   = getContent('journey_subtitle');
 
-// 2. Fetch Media Items from Database
-global $pdo; 
-$stmt = $pdo->query("SELECT * FROM personal_journey ORDER BY id DESC");
-$journey_media = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    // 2. Fetch Media Items from Database (UPDATED SORTING)
+    global $pdo; 
+    $stmt = $pdo->query("SELECT * FROM personal_journey ORDER BY priority ASC, id DESC");
+    $journey_media = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// 3. Prepare Data for Alpine.js (JSON)
-$js_media = [];
-foreach($journey_media as $m) {
-    if($m['media_type'] == 'image') {
-        $src = "view_image.php?id={$m['id']}&type=journey";
-        $thumb = $src;
-    } elseif($m['media_type'] == 'video') {
-        $src = "assets/videos/{$m['video_path']}";
-        $thumb = null; 
-    } else {
-        $src = "https://www.youtube.com/embed/{$m['youtube_id']}?rel=0&enablejsapi=1";
-        $thumb = "https://img.youtube.com/vi/{$m['youtube_id']}/hqdefault.jpg";
+    // 3. Prepare Data for Alpine.js (JSON)
+    $js_media = [];
+    foreach($journey_media as $m) {
+        if($m['media_type'] == 'image') {
+            $src = "view_image.php?id={$m['id']}&type=journey";
+            $thumb = $src;
+        } elseif($m['media_type'] == 'video') {
+            $src = "assets/videos/{$m['video_path']}";
+            $thumb = null; 
+        } else {
+            $src = "https://www.youtube.com/embed/{$m['youtube_id']}?rel=0&enablejsapi=1";
+            $thumb = "https://img.youtube.com/vi/{$m['youtube_id']}/hqdefault.jpg";
+        }
+        $js_media[] = [
+            'id' => $m['id'], 
+            'type' => $m['media_type'], 
+            'src' => $src, 
+            'thumb' => $thumb
+        ];
     }
-    $js_media[] = [
-        'id' => $m['id'], 
-        'type' => $m['media_type'], 
-        'src' => $src, 
-        'thumb' => $thumb
-    ];
-}
-$jsonOutput = htmlspecialchars(json_encode($js_media), ENT_QUOTES, 'UTF-8');
-?>
+    $jsonOutput = htmlspecialchars(json_encode($js_media), ENT_QUOTES, 'UTF-8');
+    ?>
 
     <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.13.3/dist/cdn.min.js" defer></script>
 
@@ -713,7 +756,7 @@ $jsonOutput = htmlspecialchars(json_encode($js_media), ENT_QUOTES, 'UTF-8');
             interval: 5000,
 
             init() {
-                this.mediaItems = this.mediaItems.sort(() => Math.random() - 0.5);
+                // REMOVED RANDOM SORT to respect Admin Priority
                 if(this.mediaItems.length > 0) {
                     this.setActive(0);
                     this.startAutoplay();
@@ -882,89 +925,89 @@ $jsonOutput = htmlspecialchars(json_encode($js_media), ENT_QUOTES, 'UTF-8');
     </script>
 
     <section id="gallery" class="py-24 bg-gradient-to-b from-brand-light to-white relative">
-    <div class="max-w-7xl mx-auto px-6 relative z-10">
-        <div class="flex flex-col md:flex-row justify-between items-end mb-16">
-            <div data-aos="fade-right">
-                <div class="font-heading text-5xl md:text-6xl font-bold text-brand-navy mb-4 [&>p]:m-0 [&>h1]:m-0 [&>h2]:m-0 leading-tight">
-                    <?= getContent('gallery_title') ?>
-                </div>
+        <div class="max-w-7xl mx-auto px-6 relative z-10">
+            <div class="flex flex-col md:flex-row justify-between items-end mb-16">
+                <div data-aos="fade-right">
+                    <div class="font-heading text-5xl md:text-6xl font-bold text-brand-navy mb-4 [&>p]:m-0 [&>h1]:m-0 [&>h2]:m-0 leading-tight">
+                        <?= getContent('gallery_title') ?>
+                    </div>
 
-                <div class="text-gray-600 max-w-lg text-lg [&>p]:mb-2">
-                    <?= getContent('gallery_text') ?>
-                </div>
-            </div>
-
-            <div class="flex gap-2 bg-white/50 backdrop-blur p-1.5 rounded-full border border-white shadow-lg mt-6 md:mt-0"
-                data-aos="fade-left">
-                <button onclick="filterGallery('all')"
-                    class="gallery-btn active px-6 py-2 rounded-full text-sm font-bold text-white bg-brand-blue shadow-lg transition-all">All</button>
-                <button onclick="filterGallery('freshwater')"
-                    class="gallery-btn px-6 py-2 rounded-full text-sm font-bold text-gray-500 hover:text-brand-blue hover:bg-white transition-all">Freshwater</button>
-                <button onclick="filterGallery('marine')"
-                    class="gallery-btn px-6 py-2 rounded-full text-sm font-bold text-gray-500 hover:text-brand-blue hover:bg-white transition-all">Marine</button>
-            </div>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            <?php 
-            // Fetch only the top 8 featured items from the gallery table
-            $stmt = $pdo->query("SELECT * FROM gallery WHERE is_featured = 1 LIMIT 8");
-            $featured_items = $stmt->fetchAll();
-
-            if (empty($featured_items)): ?>
-                <div class="col-span-full text-center py-20 bg-white/50 rounded-3xl border-2 border-dashed border-gray-200">
-                    <p class="text-gray-400 font-medium">No featured items selected in the CMS.</p>
-                </div>
-            <?php else: 
-                foreach($featured_items as $fish): 
-            ?>
-            <div class="gallery-item <?= htmlspecialchars($fish['category']) ?> group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-brand-blue/20 transition-all duration-500 transform hover:-translate-y-2 border border-brand-light"
-                data-aos="fade-up">
-                <div class="relative h-80 overflow-hidden">
-                    <img src="view_image.php?id=<?= $fish['id'] ?>"
-                        class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                        alt="<?= htmlspecialchars($fish['title']) ?>">
-
-                    <!-- <div class="absolute inset-0 bg-gradient-to-t from-brand-blue/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
-                        <button class="bg-brand-accent text-brand-navy font-bold px-4 py-2 rounded-full text-sm uppercase tracking-wider w-full hover:bg-white transition-colors shadow-lg">
-                            View Details
-                        </button>
-                    </div> -->
-                    <div class="absolute top-4 left-4 bg-white/80 backdrop-blur-sm text-brand-navy font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
-                        <?= htmlspecialchars($fish['category']) ?>
+                    <div class="text-gray-600 max-w-lg text-lg [&>p]:mb-2">
+                        <?= getContent('gallery_text') ?>
                     </div>
                 </div>
-                <div class="p-6">
-                    <h3 class="font-serif font-bold text-2xl text-brand-navy">
-                        <?= htmlspecialchars($fish['title']) ?>
-                    </h3>
-                    <p class="text-brand-blue font-medium mb-2">
-                        <?= htmlspecialchars($fish['scientific_name']) ?>
-                    </p>
-                    <div class="flex justify-between items-center text-sm text-gray-500 border-t border-gray-100 pt-3 mt-3">
-                        <span><?= htmlspecialchars($fish['origin']) ?></span>
-                        <span class="font-bold text-brand-navy"><?= htmlspecialchars($fish['grade']) ?></span>
-                    </div>
+
+                <div class="flex gap-2 bg-white/50 backdrop-blur p-1.5 rounded-full border border-white shadow-lg mt-6 md:mt-0"
+                    data-aos="fade-left">
+                    <button onclick="filterGallery('all')"
+                        class="gallery-btn active px-6 py-2 rounded-full text-sm font-bold text-white bg-brand-blue shadow-lg transition-all">All</button>
+                    <button onclick="filterGallery('freshwater')"
+                        class="gallery-btn px-6 py-2 rounded-full text-sm font-bold text-gray-500 hover:text-brand-blue hover:bg-white transition-all">Freshwater</button>
+                    <button onclick="filterGallery('marine')"
+                        class="gallery-btn px-6 py-2 rounded-full text-sm font-bold text-gray-500 hover:text-brand-blue hover:bg-white transition-all">Marine</button>
                 </div>
             </div>
-            <?php endforeach; 
-            endif; ?>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <?php 
+                // Fetch only the top 8 featured items from the gallery table (UPDATED SORTING)
+                $stmt = $pdo->query("SELECT * FROM gallery WHERE is_featured = 1 ORDER BY priority ASC, id DESC LIMIT 8");
+                $featured_items = $stmt->fetchAll();
+
+                if (empty($featured_items)): ?>
+                    <div class="col-span-full text-center py-20 bg-white/50 rounded-3xl border-2 border-dashed border-gray-200">
+                        <p class="text-gray-400 font-medium">No featured items selected in the CMS.</p>
+                    </div>
+                <?php else: 
+                    foreach($featured_items as $fish): 
+                ?>
+                <div class="gallery-item <?= htmlspecialchars($fish['category']) ?> group bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:shadow-brand-blue/20 transition-all duration-500 transform hover:-translate-y-2 border border-brand-light"
+                    data-aos="fade-up">
+                    <div class="relative h-80 overflow-hidden">
+                        <img src="view_image.php?id=<?= $fish['id'] ?>"
+                            class="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                            alt="<?= htmlspecialchars($fish['title']) ?>">
+
+                        <!-- <div class="absolute inset-0 bg-gradient-to-t from-brand-blue/80 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-6">
+                            <button class="bg-brand-accent text-brand-navy font-bold px-4 py-2 rounded-full text-sm uppercase tracking-wider w-full hover:bg-white transition-colors shadow-lg">
+                                View Details
+                            </button>
+                        </div> -->
+                        <div class="absolute top-4 left-4 bg-white/80 backdrop-blur-sm text-brand-navy font-bold text-xs px-3 py-1 rounded-full uppercase tracking-wider shadow-sm">
+                            <?= htmlspecialchars($fish['category']) ?>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <h3 class="font-serif font-bold text-2xl text-brand-navy">
+                            <?= htmlspecialchars($fish['title']) ?>
+                        </h3>
+                        <p class="text-brand-blue font-medium mb-2">
+                            <?= htmlspecialchars($fish['scientific_name']) ?>
+                        </p>
+                        <div class="flex justify-between items-center text-sm text-gray-500 border-t border-gray-100 pt-3 mt-3">
+                            <span><?= htmlspecialchars($fish['origin']) ?></span>
+                            <span class="font-bold text-brand-navy"><?= htmlspecialchars($fish['grade']) ?></span>
+                        </div>
+                    </div>
+                </div>
+                <?php endforeach; 
+                endif; ?>
+            </div>
+
+            <div class="text-center mt-12">
+                <a href="pages/product.php"
+                    class="inline-block border-b-2 border-brand-accent pb-1 text-brand-navy font-bold uppercase tracking-widest hover:text-brand-blue hover:border-brand-blue transition-colors">
+                    View Full Catalog
+                </a>
+            </div>
         </div>
 
-        <div class="text-center mt-12">
-            <a href="pages/product.php"
-                class="inline-block border-b-2 border-brand-accent pb-1 text-brand-navy font-bold uppercase tracking-widest hover:text-brand-blue hover:border-brand-blue transition-colors">
-                View Full Catalog
-            </a>
+        <div class="wave-separator">
+            <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
+                <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
+                    class="fill-white"></path>
+            </svg>
         </div>
-    </div>
-
-    <div class="wave-separator">
-        <svg data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 120" preserveAspectRatio="none">
-            <path d="M321.39,56.44c58-10.79,114.16-30.13,172-41.86,82.39-16.72,168.19-17.73,250.45-.39C823.78,31,906.67,72,985.66,92.83c70.05,18.48,146.53,26.09,214.34,3V0H0V27.35A600.21,600.21,0,0,0,321.39,56.44Z"
-                class="fill-white"></path>
-        </svg>
-    </div>
 </section>
 
     <section id="services" class="py-24 bg-white overflow-hidden relative">
@@ -1207,21 +1250,120 @@ $jsonOutput = htmlspecialchars(json_encode($js_media), ENT_QUOTES, 'UTF-8');
         </div>
     </section>
 
-    <footer class="bg-brand-white border-t border-gray-100 py-12 relative z-10">
-        <div class="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-6">
-            <div class="flex items-center gap-2">
-                <img id="nav-logo" src="view_image.php?type=logo" alt="CExport Logo"
-                    class="h-12 w-auto object-contain drop-shadow-md transition-all ">
+    <footer class="relative bg-gradient-to-b from-brand-white to-gray-50 border-t border-gray-200/70">
+        <!-- soft glow -->
+        <div class="absolute inset-0 pointer-events-none bg-[radial-gradient(circle_at_top,rgba(59,130,246,0.06),transparent_60%)]"></div>
+
+        <div class="relative max-w-7xl mx-auto px-6 py-14">
+            <div class="flex flex-col md:flex-row items-center md:items-start justify-between gap-10">
+
+                <!-- Logo, Brand & Social -->
+                <div class="flex flex-col items-center md:items-start gap-5 max-w-sm">
+                    <img 
+                        id="nav-logo"
+                        src="view_image.php?type=logo"
+                        alt="CExport Logo"
+                        class="h-12 w-auto object-contain drop-shadow-lg transition-transform duration-300 hover:scale-105"
+                    >
+
+                    <p class="text-sm text-gray-500 text-center md:text-left">
+                        Powering global exports with precision, trust, and modern technology.
+                    </p>
+
+                    <!-- Social Connect -->
+                    <div class="mt-4">
+                        <p class="text-xs uppercase tracking-widest text-gray-400 mb-3 text-center md:text-left">
+                            Social Connect
+                        </p>
+
+                        <div class="flex gap-4 justify-center md:justify-start">
+                            <?php
+                            $fb    = getContent('social_facebook');
+                            $insta = getContent('social_instagram');
+                            $wa    = getContent('social_whatsapp');
+                            ?>
+
+                            <?php if(!empty($fb) && $fb != '#'): ?>
+                            <a href="<?= htmlspecialchars($fb) ?>" target="_blank"
+                            class="group">
+                                <img width="28" height="28"
+                                    class="opacity-60 group-hover:opacity-100 transition"
+                                    src="https://img.icons8.com/windows/32/000000/facebook-new.png"
+                                    alt="facebook" />
+                            </a>
+                            <?php endif; ?>
+
+                            <?php if(!empty($insta) && $insta != '#'): ?>
+                            <a href="<?= htmlspecialchars($insta) ?>" target="_blank"
+                            class="group">
+                                <img width="28" height="28"
+                                    class="opacity-60 group-hover:opacity-100 transition"
+                                    src="https://img.icons8.com/windows/32/000000/instagram-new.png"
+                                    alt="instagram" />
+                            </a>
+                            <?php endif; ?>
+
+                            <?php if(!empty($wa) && $wa != '#'): ?>
+                            <a href="<?= htmlspecialchars($wa) ?>" target="_blank"
+                            class="group">
+                                <img width="28" height="28"
+                                    class="opacity-60 group-hover:opacity-100 transition"
+                                    src="https://img.icons8.com/windows/32/000000/whatsapp--v1.png"
+                                    alt="whatsapp" />
+                            </a>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Links -->
+                <div class="flex flex-col sm:flex-row gap-10 text-center sm:text-left">
+                    <div>
+                        <h4 class="text-sm font-semibold text-brand-navy mb-3 tracking-wide uppercase">
+                            Company
+                        </h4>
+                        <ul class="space-y-2 text-sm text-gray-500">
+                            <li><a href="pages/about.php" class="hover:text-brand-blue transition">About</a></li>
+                            <li><a href="#" class="hover:text-brand-blue transition">Privacy Policy</a></li>
+                            <li><a href="#" class="hover:text-brand-blue transition">Terms & Conditions</a></li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h4 class="text-sm font-semibold text-brand-navy mb-3 tracking-wide uppercase">
+                            Support
+                        </h4>
+                        <ul class="space-y-2 text-sm text-gray-500">
+                            <li><a href="#contact" class="hover:text-brand-blue transition">Contact</a></li>
+                            <li><a href="#" class="hover:text-brand-blue transition">Documentation</a></li>
+                            <li><a href="#" class="hover:text-brand-blue transition">Help Center</a></li>
+                        </ul>
+                    </div>
+                </div>
             </div>
-            <p class="text-gray-400 text-sm">© 2024 CExport. All rights reserved.</p>
-            <p class="text-gray-400 text-sm">Design By Que Systems</p>
-            <div class="flex gap-6 text-sm font-bold text-brand-navy">
-                <a href="#" class="hover:text-brand-blue">Privacy</a>
-                <a href="#" class="hover:text-brand-blue">Terms</a>
-                <a href="#" class="hover:text-brand-blue">Sitemap</a>
+
+            <!-- Divider -->
+            <div class="my-10 h-px bg-gradient-to-r from-transparent via-gray-300 to-transparent"></div>
+
+            <!-- Bottom Row -->
+            <div class="flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-gray-400">
+                <p>
+                    © <?= date('Y') ?> <a href="#" rel="noopener noreferrer"
+                                        class="text-gray-600 font-medium hover:text-brand-blue transition">
+                                            CExport
+                                    </a>. All rights reserved.
+                </p>
+                <p>
+                    Crafted with care by 
+                    <a href="https://quesystems.in/" target="_blank" rel="noopener noreferrer"
+                        class="text-gray-600 font-semibold hover:text-brand-blue transition">
+                            Que Systems
+                    </a>
+                </p>
             </div>
         </div>
     </footer>
+
 
     <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
     <script>
@@ -1264,9 +1406,65 @@ $jsonOutput = htmlspecialchars(json_encode($js_media), ENT_QUOTES, 'UTF-8');
         // Mobile Menu
         const btn = document.getElementById('mobile-menu-btn');
         const menu = document.getElementById('mobile-menu');
-        btn.addEventListener('click', () => {
-            menu.classList.toggle('hidden');
+        function updateNavbarOnScroll() {
+    const links = navbar.querySelectorAll('a, button, span.font-logo');
+
+    if (window.scrollY > 50) {
+        // Scrolled state
+        navbar.classList.add('shadow-md', 'bg-white/95', 'backdrop-blur-sm');
+        navbar.classList.remove('bg-brand-navy');
+
+        if (navLogo) {
+            navLogo.classList.remove('brightness-0', 'invert');
+        }
+
+        links.forEach(link => {
+            if (!link.classList.contains('crimson-btn')) {
+                link.classList.remove('text-white');
+                link.classList.add('text-brand-navy');
+            }
         });
+
+    } else {
+        // Top (hero) state
+        navbar.classList.remove(
+            'shadow-md',
+            'bg-white/95',
+            'backdrop-blur-sm',
+            'bg-brand-navy'
+        );
+
+        if (navLogo) {
+            navLogo.classList.add('brightness-0', 'invert');
+        }
+
+        links.forEach(link => {
+            if (!link.classList.contains('crimson-btn')) {
+                link.classList.add('text-white');
+                link.classList.remove('text-brand-navy');
+            }
+        });
+    }
+}
+
+        let mobileMenuOpen = false;
+
+btn.addEventListener('click', () => {
+    mobileMenuOpen = !mobileMenuOpen;
+    menu.classList.toggle('hidden');
+    document.body.classList.toggle('overflow-hidden', mobileMenuOpen);
+
+    if (mobileMenuOpen) {
+        // Menu open → force solid navbar
+        navbar.classList.add('bg-brand-navy');
+        navbar.classList.remove('bg-white/95', 'shadow-md');
+    } else {
+        // Menu closed → restore navbar correctly
+        updateNavbarOnScroll();
+    }
+});
+
+
 
         // Gallery Filter
         function filterGallery(type) {
@@ -1300,53 +1498,47 @@ $jsonOutput = htmlspecialchars(json_encode($js_media), ENT_QUOTES, 'UTF-8');
         const navLogo = document.getElementById('nav-logo'); // Get the logo image
 
         window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                // Scrolled State (White Background)
-                navbar.classList.add('shadow-md', 'bg-white/95', 'backdrop-blur-sm');
-                navbar.classList.remove('border-b', 'border-white/10');
+            // ❗ If mobile menu is open, freeze navbar state
+            if (mobileMenuOpen) return;
 
-                // 1. Make Logo Original Color (Black) by removing the filter
+            const links = navbar.querySelectorAll('a, button, span.font-logo');
+
+            if (window.scrollY > 50) {
+                // ===== SCROLLED STATE =====
+                navbar.classList.add('shadow-md', 'bg-white/95', 'backdrop-blur-sm');
+                navbar.classList.remove('border-white/0');
+
                 if (navLogo) {
                     navLogo.classList.remove('brightness-0', 'invert');
                 }
 
-                // 2. Change Menu Links to Dark Blue
-                const links = navbar.querySelectorAll('a, button, span.font-logo');
+                // Dark links
                 links.forEach(link => {
-                    if (link.id !== 'mobile-menu-btn' && !link.classList.contains('crimson-btn')) {
-                        link.classList.remove('text-white');
-                        link.classList.add('text-brand-navy');
-                    }
-                    else if (link.id === 'mobile-menu-btn') {
+                    if (!link.classList.contains('crimson-btn')) {
                         link.classList.remove('text-white');
                         link.classList.add('text-brand-navy');
                     }
                 });
 
             } else {
-                // Top State (Transparent Background)
+                // ===== TOP STATE =====
                 navbar.classList.remove('shadow-md', 'bg-white/95', 'backdrop-blur-sm');
-                navbar.classList.add('border-b', 'border-white/0');
+                navbar.classList.add('border-white/0');
 
-                // 1. Make Logo White again using CSS Filter
                 if (navLogo) {
                     navLogo.classList.add('brightness-0', 'invert');
                 }
 
-                // 2. Revert Menu Links to White
-                const links = navbar.querySelectorAll('a, button, span.font-logo');
+                // White links
                 links.forEach(link => {
-                    if (link.id !== 'mobile-menu-btn' && !link.classList.contains('crimson-btn')) {
-                        link.classList.add('text-white');
-                        link.classList.remove('text-brand-navy');
-                    }
-                    else if (link.id === 'mobile-menu-btn') {
+                    if (!link.classList.contains('crimson-btn')) {
                         link.classList.add('text-white');
                         link.classList.remove('text-brand-navy');
                     }
                 });
             }
         });
+
 
 
         // Initialize Swiper (RENAMED to avoid conflict)
@@ -1454,6 +1646,13 @@ $jsonOutput = htmlspecialchars(json_encode($js_media), ENT_QUOTES, 'UTF-8');
             }
         });
     </script>
+    <script>
+  // Force correct layout after first mobile paint
+  window.addEventListener('load', () => {
+    document.body.style.width = '100%';
+    document.documentElement.style.width = '100%';
+  });
+</script>
 </body>
 
 </html>
